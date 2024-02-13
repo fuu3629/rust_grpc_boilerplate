@@ -1,17 +1,25 @@
 syntax = "proto3";
 package jobManage;
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 
 service jobManageService {
+    rpc createGroup (CreateGroupRequest) returns (google.protobuf.Empty);
     rpc createUser (CreateUserRequest) returns (CreateUserResponse);
     rpc loginUser (LoginUserRequest) returns (LoginUserResponse);
     rpc createShift (CreateShiftRequest) returns (CreateShiftResponse);
+}
+
+message CreateGroupRequest {
+    string email = 1;
+    string group_name = 2;
 }
 
 enum Permission {
     USER = 0;
     ADMIN = 1;
 }
+
 message CreateUserRequest {
     string user_name = 1;
     string email = 2;

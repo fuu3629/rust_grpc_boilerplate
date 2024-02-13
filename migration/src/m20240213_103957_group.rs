@@ -9,20 +9,16 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(Shift::Table)
+                    .table(Group::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(Shift::ShiftId)
+                        ColumnDef::new(Group::GroupId)
                             .integer()
                             .not_null()
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(Shift::UserId).integer().not_null())
-                    .col(ColumnDef::new(Shift::Assigned).boolean().not_null())
-                    .col(ColumnDef::new(Shift::Year).integer().not_null())
-                    .col(ColumnDef::new(Shift::Month).integer().not_null())
-                    .col(ColumnDef::new(Shift::Day).integer().not_null())
+                    .col(ColumnDef::new(Group::Email).string().not_null())
                     .to_owned(),
             )
             .await
@@ -30,18 +26,14 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(Shift::Table).to_owned())
+            .drop_table(Table::drop().table(Group::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-enum Shift {
+pub enum Group {
     Table,
-    ShiftId,
-    UserId,
-    Assigned,
-    Year,
-    Month,
-    Day,
+    GroupId,
+    Email,
 }

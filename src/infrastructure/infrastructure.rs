@@ -20,31 +20,26 @@ impl InfrastructureImpl {
             user_name: ActiveValue::set(request.user_name),
             email: ActiveValue::set(request.email),
             password: ActiveValue::set(request.password),
-            belong_to: ActiveValue::set(request.belog),
             permission: ActiveValue::set(request.permission),
             ..Default::default()
         };
-
         let _res = User::insert(user).exec(&db).await?;
+        print!("{:?}", _res);
         Ok(())
     }
 
     pub async fn create_shift(&self, request: CreateShiftRequest) -> Result<(), DbErr> {
-        println!("Got a request: {:?}", request);
-        let mut shifts = vec![];
         let user_id = request.user_id;
-        let belong = request.belong;
         for shift in request.shifts {
             let shift = ShiftModel {
                 user_id: ActiveValue::set(user_id),
-                belong_to: ActiveValue::set(belong.clone()),
+                assigned: ActiveValue::set(false),
                 year: ActiveValue::set(shift.year),
                 month: ActiveValue::set(shift.month),
                 day: ActiveValue::set(shift.day),
                 ..Default::default()
             };
             let r = Shift::insert(shift).exec(&self.db).await?;
-            shifts.push(r);
         }
         Ok(())
     }

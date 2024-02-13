@@ -8,7 +8,7 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub shift_id: i32,
     pub user_id: i32,
-    pub belong_to: String,
+    pub assigned: bool,
     pub year: i32,
     pub month: i32,
     pub day: i32,

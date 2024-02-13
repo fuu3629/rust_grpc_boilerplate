@@ -2,5 +2,6 @@
 
 pub mod prelude;
 
+pub mod group;
 pub mod shift;
 pub mod user;

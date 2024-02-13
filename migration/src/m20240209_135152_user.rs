@@ -18,11 +18,11 @@ impl MigrationTrait for Migration {
                             .auto_increment()
                             .primary_key(),
                     )
+                    .col(ColumnDef::new(User::GroupId).integer())
                     .col(ColumnDef::new(User::UserName).string().not_null())
-                    .col(ColumnDef::new(User::Email).string().not_null())
+                    .col(ColumnDef::new(User::Email).string().unique_key().not_null())
                     .col(ColumnDef::new(User::Password).string().not_null())
-                    .col(ColumnDef::new(User::BelongTo).string().not_null())
-                    .col(ColumnDef::new(User::Permission).string().not_null())
+                    .col(ColumnDef::new(User::Permission).integer().not_null())
                     .to_owned(),
             )
             .await
@@ -36,12 +36,12 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-enum User {
+pub enum User {
     Table,
     UserId,
+    GroupId,
     UserName,
     Email,
     Password,
-    BelongTo,
     Permission,
 }

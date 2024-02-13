@@ -15,7 +15,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let database_url = "postgres://postgres:password@0.0.0.0:5432/example";
     let db: DatabaseConnection = connect(database_url).await?;
     let addr = "127.0.0.1:50051".parse()?;
-    let service = server::MyJobManage::new(&db);
+    let service = server::MyJobManage::new(db);
     service.run_server(addr).await?;
     Ok(())
 }

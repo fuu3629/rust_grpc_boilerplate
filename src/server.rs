@@ -2,8 +2,9 @@ use crate::infrastructure::infrastructure::InfrastructureImpl;
 use crate::job_manage;
 use job_manage::job_manage_service_server::JobManageServiceServer;
 use job_manage::{
-    job_manage_service_server::JobManageService, CreateShiftRequest, CreateShiftResponse,
-    CreateUserRequest, CreateUserResponse, LoginUserRequest, LoginUserResponse,
+    job_manage_service_server::JobManageService, CreateGroupRequest, CreateShiftRequest,
+    CreateShiftResponse, CreateUserRequest, CreateUserResponse, LoginUserRequest,
+    LoginUserResponse,
 };
 use sea_orm::*;
 use std::net::SocketAddr;
@@ -17,9 +18,9 @@ pub struct MyJobManage {
 }
 
 impl MyJobManage {
-    pub fn new(db: &DatabaseConnection) -> MyJobManage {
+    pub fn new(db: DatabaseConnection) -> MyJobManage {
         MyJobManage {
-            db: db.clone(),
+            db: db,
             infrastructure: InfrastructureImpl::default(),
         }
     }
@@ -47,10 +48,9 @@ impl JobManageService for MyJobManage {
         &self,
         request: Request<CreateUserRequest>,
     ) -> Result<Response<CreateUserResponse>, Status> {
+        println!("{:?}", &self.db);
         let _res = self.infrastructure.create_user(request.into_inner()).await;
-        let response = CreateUserResponse {
-            message: "123".to_string(),
-        };
+        let response = CreateUserResponse { user_id: 123 };
         Ok(Response::new(response))
     }
 
@@ -74,5 +74,13 @@ impl JobManageService for MyJobManage {
             message: "123".to_string(),
         };
         Ok(Response::new(response))
+    }
+
+    async fn create_group(
+        &self,
+        request: Request<CreateGroupRequest>,
+    ) -> Result<Response<()>, Status> {
+        println!("Got a request: {:?}", request);
+        Ok(Response::new(()))
     }
 }
