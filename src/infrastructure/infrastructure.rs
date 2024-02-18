@@ -1,46 +1,155 @@
-use super::entities::prelude::{Shift, User};
+use super::entities::prelude::{Group, Shift, User};
 use super::entities::*;
-use super::entities::{shift::ActiveModel as ShiftModel, user::ActiveModel as UserModel};
 use crate::job_manage;
+use bcrypt::verify;
+use hmac::{Hmac, Mac};
 use job_manage::{
-    job_manage_service_server::JobManageService, CreateShiftRequest, CreateShiftResponse,
+    job_manage_service_server::JobManageService, CreateGroupRequest, CreateShiftRequest,
     CreateUserRequest, CreateUserResponse, LoginUserRequest, LoginUserResponse,
 };
+use jwt::{SignWithKey, VerifyWithKey};
 use sea_orm::*;
+use sha2::Sha256;
+use std::{
+    collections::{BTreeMap, HashMap},
+    env,
+    time::{SystemTime, UNIX_EPOCH},
+};
+use tonic::Status;
 #[derive(Default)]
-pub struct InfrastructureImpl {
-    db: DatabaseConnection,
-}
+pub struct InfrastructureImpl {}
 
 impl InfrastructureImpl {
-    pub async fn create_user(&self, request: CreateUserRequest) -> Result<(), DbErr> {
+    pub fn new() -> InfrastructureImpl {
+        InfrastructureImpl {}
+    }
+    pub async fn create_user(
+        &self,
+        request: CreateUserRequest,
+    ) -> Result<CreateUserResponse, Status> {
         let database_url = "postgres://postgres:password@0.0.0.0:5432/example";
-        let db: DatabaseConnection = Database::connect(database_url).await?;
+        let db: DatabaseConnection = Database::connect(database_url)
+            .await
+            .map_err(|_| Status::already_exists("user already exist"))?;
+        let group_id = Group::find()
+            .filter(group::Column::GroupName.eq(request.belong))
+            .one(&db)
+            .await
+            .map_err(|_| Status::not_found("such group is not exist"))?
+            .unwrap()
+            .group_id;
+        let password = bcrypt::hash(request.password, 10)
+            .map_err(|_| Status::unknown("Error while creating the user"))?;
         let user = user::ActiveModel {
             user_name: ActiveValue::set(request.user_name),
             email: ActiveValue::set(request.email),
-            password: ActiveValue::set(request.password),
+            group_id: ActiveValue::set(Some(group_id)),
+            password: ActiveValue::set(password),
             permission: ActiveValue::set(request.permission),
             ..Default::default()
         };
-        let _res = User::insert(user).exec(&db).await?;
-        print!("{:?}", _res);
+        let _res = User::insert(user)
+            .exec(&db)
+            .await
+            .map_err(|_| Status::already_exists("user already exists"))?;
+        let user_id = _res.last_insert_id;
+        let token = generate_token(user_id)?;
+        Ok(CreateUserResponse { token: token })
+    }
+
+    pub async fn login_user(&self, request: LoginUserRequest) -> Result<LoginUserResponse, Status> {
+        let database_url = "postgres://postgres:password@0.0.0.0:5432/example";
+        let db: DatabaseConnection = Database::connect(database_url)
+            .await
+            .map_err(|_| Status::permission_denied("DataBase connection error"))?;
+        let user = User::find()
+            .filter(user::Column::Email.eq(request.email))
+            .one(&db)
+            .await
+            .map_err(|_| Status::not_found("such group is not exist"))?
+            .unwrap();
+        match verify(request.password, &user.password) {
+            Ok(true) => {
+                let token = generate_token(user.user_id)?;
+                Ok(LoginUserResponse { token: token })
+            }
+            Ok(false) | Err(_) => return Err(Status::permission_denied("password is not correct")),
+        }
+    }
+
+    pub async fn create_group(&self, request: CreateGroupRequest) -> Result<(), Status> {
+        let database_url = "postgres://postgres:password@0.0.0.0:5432/example";
+        let db: DatabaseConnection = Database::connect(database_url)
+            .await
+            .map_err(|_| Status::permission_denied("DataBase connection error"))?;
+        let group = group::ActiveModel {
+            group_name: ActiveValue::set(request.group_name),
+            email: ActiveValue::set(request.email),
+            ..Default::default()
+        };
+        let _res = Group::insert(group)
+            .exec(&db)
+            .await
+            .map_err(|_| Status::already_exists("group already exists"));
         Ok(())
     }
 
-    pub async fn create_shift(&self, request: CreateShiftRequest) -> Result<(), DbErr> {
+    pub async fn create_shift(&self, request: CreateShiftRequest) -> Result<(), Status> {
+        let database_url = "postgres://postgres:password@0.0.0.0:5432/example";
+        let db: DatabaseConnection = Database::connect(database_url)
+            .await
+            .map_err(|_| Status::already_exists("DataBase connection error"))?;
         let user_id = request.user_id;
-        for shift in request.shifts {
-            let shift = ShiftModel {
+        let dates = request.shifts.clone();
+        let shifts = dates
+            .iter()
+            .map(|shift| shift::ActiveModel {
                 user_id: ActiveValue::set(user_id),
                 assigned: ActiveValue::set(false),
                 year: ActiveValue::set(shift.year),
                 month: ActiveValue::set(shift.month),
                 day: ActiveValue::set(shift.day),
                 ..Default::default()
-            };
-            let r = Shift::insert(shift).exec(&self.db).await?;
-        }
+            })
+            .collect::<Vec<shift::ActiveModel>>();
+        let _res = Shift::insert_many(shifts)
+            .exec(&db)
+            .await
+            .map_err(|_| Status::already_exists("user already exists"))?;
         Ok(())
     }
+}
+
+fn generate_claims(user_id: i32) -> Result<BTreeMap<&'static str, String>, Status> {
+    let mut claims: BTreeMap<&str, String> = BTreeMap::new();
+
+    claims.insert("sub", user_id.to_string());
+
+    let current_timestamp = SystemTime::now().duration_since(UNIX_EPOCH);
+
+    claims.insert("iat", current_timestamp.unwrap().as_secs().to_string());
+    claims.insert("exp", String::from("3600"));
+
+    Ok(claims)
+}
+
+fn generate_token(user_id: i32) -> Result<String, Status> {
+    let app_key: String = env::var("APP_KEY").expect("env APP_KEY is not defined");
+    let key: Hmac<Sha256> =
+        Hmac::new_from_slice(app_key.as_bytes()).expect("failed to create key from app key");
+    let claims = generate_claims(user_id).expect("failed to create claims");
+    let access_token = claims.sign_with_key(&key).expect("fial to create token");
+    Ok(access_token)
+}
+
+pub fn verify_token(token: &str) -> Result<bool, Status> {
+    let app_key: String = env::var("APP_KEY").expect("env APP_KEY is not defined");
+
+    let key: Hmac<Sha256> = Hmac::new_from_slice(app_key.as_bytes())
+        .map_err(|_| Status::failed_precondition("failed to create key"))?;
+
+    Ok(token
+        .verify_with_key(&key)
+        .map(|_: HashMap<String, String>| true)
+        .unwrap_or(false))
 }

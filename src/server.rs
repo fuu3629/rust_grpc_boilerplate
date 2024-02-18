@@ -1,30 +1,30 @@
 use crate::infrastructure::infrastructure::InfrastructureImpl;
-use crate::job_manage;
+use crate::{infrastructure, job_manage};
 use job_manage::job_manage_service_server::JobManageServiceServer;
 use job_manage::{
     job_manage_service_server::JobManageService, CreateGroupRequest, CreateShiftRequest,
-    CreateShiftResponse, CreateUserRequest, CreateUserResponse, LoginUserRequest,
-    LoginUserResponse,
+    CreateUserRequest, CreateUserResponse, LoginUserRequest, LoginUserResponse,
 };
-use sea_orm::*;
 use std::net::SocketAddr;
 use tonic::{transport::Server, Request, Response, Status};
 use tonic_reflection::server::Builder;
 
 #[derive(Default)]
 pub struct MyJobManage {
-    db: DatabaseConnection,
     infrastructure: InfrastructureImpl,
 }
 
 impl MyJobManage {
-    pub fn new(db: DatabaseConnection) -> MyJobManage {
+    pub fn new() -> MyJobManage {
         MyJobManage {
-            db: db,
-            infrastructure: InfrastructureImpl::default(),
+            infrastructure: InfrastructureImpl::new(),
         }
     }
     pub async fn run_server(self, addr: SocketAddr) -> Result<(), Box<dyn std::error::Error>> {
+        // let allow_cors = CorsLayer::new()
+        //     .allow_origin(tower_http::cors::Any)
+        //     .allow_headers(tower_http::cors::Any)
+        //     .allow_methods(tower_http::cors::Any);
         Server::builder()
             .add_service(JobManageServiceServer::new(self))
             .add_service(
@@ -48,39 +48,44 @@ impl JobManageService for MyJobManage {
         &self,
         request: Request<CreateUserRequest>,
     ) -> Result<Response<CreateUserResponse>, Status> {
-        println!("{:?}", &self.db);
-        let _res = self.infrastructure.create_user(request.into_inner()).await;
-        let response = CreateUserResponse { user_id: 123 };
-        Ok(Response::new(response))
+        let token = self
+            .infrastructure
+            .create_user(request.into_inner())
+            .await?;
+        Ok(Response::new(token))
     }
 
     async fn login_user(
         &self,
         request: Request<LoginUserRequest>,
     ) -> Result<Response<LoginUserResponse>, Status> {
-        println!("Got a request: {:?}", request);
-        let response = LoginUserResponse {
-            message: "123".to_string(),
-        };
+        let response = self.infrastructure.login_user(request.into_inner()).await?;
         Ok(Response::new(response))
     }
 
     async fn create_shift(
         &self,
         request: Request<CreateShiftRequest>,
-    ) -> Result<Response<CreateShiftResponse>, Status> {
-        println!("Got a request: {:?}", request);
-        let response = CreateShiftResponse {
-            message: "123".to_string(),
-        };
-        Ok(Response::new(response))
+    ) -> Result<Response<()>, Status> {
+        let token = request
+            .metadata()
+            .get("authorization")
+            .ok_or(Status::unauthenticated("No access token specified"))?
+            .to_str()
+            .map_err(|_| Status::unauthenticated("Invalid access token"))?;
+        match infrastructure::infrastructure::verify_token(token) {
+            Ok(true) => (),
+            Err(_) | Ok(false) => return Err(Status::unauthenticated("Invalid token")),
+        }
+        let _res = self.infrastructure.create_shift(request.into_inner()).await;
+        Ok(Response::new(()))
     }
 
     async fn create_group(
         &self,
         request: Request<CreateGroupRequest>,
     ) -> Result<Response<()>, Status> {
-        println!("Got a request: {:?}", request);
+        let _ = self.infrastructure.create_group(request.into_inner()).await;
         Ok(Response::new(()))
     }
 }

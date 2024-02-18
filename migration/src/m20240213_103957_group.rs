@@ -18,6 +18,7 @@ impl MigrationTrait for Migration {
                             .auto_increment()
                             .primary_key(),
                     )
+                    .col(ColumnDef::new(Group::GroupName).string().not_null())
                     .col(ColumnDef::new(Group::Email).string().not_null())
                     .to_owned(),
             )
@@ -35,5 +36,6 @@ impl MigrationTrait for Migration {
 pub enum Group {
     Table,
     GroupId,
+    GroupName,
     Email,
 }

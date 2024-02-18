@@ -1,21 +1,18 @@
 mod infrastructure;
 mod server;
-use sea_orm::*;
 pub mod job_manage {
     tonic::include_proto!("job_manage");
 }
+use dotenvy::dotenv;
 
-async fn connect(db_url: &str) -> Result<DatabaseConnection, DbErr> {
-    let db: DatabaseConnection = Database::connect(db_url).await?;
-    Ok(db)
-}
+// sea-orm-cli migrate refresh
+// sea-orm-cli generate entity -o src/infrastructure/entities
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let database_url = "postgres://postgres:password@0.0.0.0:5432/example";
-    let db: DatabaseConnection = connect(database_url).await?;
+    dotenv().ok();
     let addr = "127.0.0.1:50051".parse()?;
-    let service = server::MyJobManage::new(db);
+    let service = server::MyJobManage::new();
     service.run_server(addr).await?;
     Ok(())
 }

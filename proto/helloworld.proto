@@ -7,7 +7,7 @@ service jobManageService {
     rpc createGroup (CreateGroupRequest) returns (google.protobuf.Empty);
     rpc createUser (CreateUserRequest) returns (CreateUserResponse);
     rpc loginUser (LoginUserRequest) returns (LoginUserResponse);
-    rpc createShift (CreateShiftRequest) returns (CreateShiftResponse);
+    rpc createShift (CreateShiftRequest) returns (google.protobuf.Empty);
 }
 
 message CreateGroupRequest {
@@ -24,12 +24,13 @@ message CreateUserRequest {
     string user_name = 1;
     string email = 2;
     string password = 3;
-    string belog = 4;
+    string belong = 4;
     Permission permission = 5;
+    string group_name = 6;
 }
 
 message CreateUserResponse {
-    int32 user_id = 1;
+    string token = 1;
 }
 
 message LoginUserRequest {
@@ -38,7 +39,7 @@ message LoginUserRequest {
 }
 
 message LoginUserResponse {
-    string message = 1;
+    string token = 1;
 }
 
 message Date {
@@ -51,8 +52,4 @@ message CreateShiftRequest {
     string belong = 1;
     int32 userId = 2;
     repeated Date shifts = 3;
-}
-
-message CreateShiftResponse {
-    string message = 1;
 }
