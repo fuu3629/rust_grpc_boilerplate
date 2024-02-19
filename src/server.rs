@@ -3,7 +3,8 @@ use crate::{infrastructure, job_manage};
 use job_manage::job_manage_service_server::JobManageServiceServer;
 use job_manage::{
     job_manage_service_server::JobManageService, CreateGroupRequest, CreateShiftRequest,
-    CreateUserRequest, CreateUserResponse, LoginUserRequest, LoginUserResponse,
+    CreateUserRequest, CreateUserResponse, GetAllGroupResponse, LoginUserRequest,
+    LoginUserResponse,
 };
 use std::net::SocketAddr;
 use tonic::{transport::Server, Request, Response, Status};
@@ -81,7 +82,10 @@ impl JobManageService for MyJobManage {
             Ok(true) => (),
             Err(_) | Ok(false) => return Err(Status::unauthenticated("Invalid token")),
         }
-        let _res = self.infrastructure.create_shift(request.into_inner()).await;
+        let _res = self
+            .infrastructure
+            .create_shift(request.into_inner())
+            .await?;
         Ok(Response::new(()))
     }
 
@@ -89,7 +93,18 @@ impl JobManageService for MyJobManage {
         &self,
         request: Request<CreateGroupRequest>,
     ) -> Result<Response<()>, Status> {
-        let _ = self.infrastructure.create_group(request.into_inner()).await;
+        let _ = self
+            .infrastructure
+            .create_group(request.into_inner())
+            .await?;
         Ok(Response::new(()))
+    }
+
+    async fn get_all_group(
+        &self,
+        _request: Request<()>,
+    ) -> Result<Response<GetAllGroupResponse>, Status> {
+        let response = self.infrastructure.get_all_group().await?;
+        Ok(Response::new(response))
     }
 }

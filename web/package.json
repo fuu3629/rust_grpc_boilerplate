@@ -1,0 +1,35 @@
+{
+  "name": "web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "gen:services": "buf generate ../proto/helloworld.proto"
+  },
+  "dependencies": {
+    "@bufbuild/buf": "^1.29.0",
+    "@bufbuild/connect-web": "^0.11.0",
+    "@bufbuild/protobuf": "^1.7.2",
+    "@chakra-ui/react": "^2.8.2",
+    "@emotion/react": "^11.11.3",
+    "@emotion/styled": "^11.11.0",
+    "framer-motion": "^11.0.5",
+    "next": "14.1.0",
+    "nookies": "^2.5.2",
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "@bufbuild/protoc-gen-connect-web": "^0.11.0",
+    "@bufbuild/protoc-gen-es": "^1.7.2",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.1.0",
+    "typescript": "^5"
+  }
+}

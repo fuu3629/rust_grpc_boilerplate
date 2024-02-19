@@ -1,15 +1,16 @@
-use super::entities::prelude::{Group, Shift, User};
+use super::entities::prelude::{Group as GroupEntity, Shift, User};
 use super::entities::*;
-use crate::job_manage;
+use crate::job_manage::{
+    CreateGroupRequest, CreateShiftRequest, CreateUserRequest, CreateUserResponse,
+    GetAllGroupResponse, Group, LoginUserRequest, LoginUserResponse,
+};
 use bcrypt::verify;
 use hmac::{Hmac, Mac};
-use job_manage::{
-    CreateGroupRequest, CreateShiftRequest, CreateUserRequest, CreateUserResponse,
-    LoginUserRequest, LoginUserResponse,
-};
 use jwt::{SignWithKey, VerifyWithKey};
 use sea_orm::*;
 use sha2::Sha256;
+use std::ops::Add;
+use std::time::Duration;
 use std::{
     collections::{BTreeMap, HashMap},
     env,
@@ -31,19 +32,12 @@ impl InfrastructureImpl {
         let db: DatabaseConnection = Database::connect(database_url)
             .await
             .map_err(|_| Status::already_exists("user already exist"))?;
-        let group_id = Group::find()
-            .filter(group::Column::GroupName.eq(request.belong))
-            .one(&db)
-            .await
-            .map_err(|_| Status::not_found("such group is not exist"))?
-            .unwrap()
-            .group_id;
         let password = bcrypt::hash(request.password, 10)
             .map_err(|_| Status::unknown("Error while creating the user"))?;
         let user = user::ActiveModel {
             user_name: ActiveValue::set(request.user_name),
             email: ActiveValue::set(request.email),
-            group_id: ActiveValue::set(Some(group_id)),
+            group_id: ActiveValue::set(request.group_id),
             password: ActiveValue::set(password),
             permission: ActiveValue::set(request.permission),
             ..Default::default()
@@ -87,10 +81,10 @@ impl InfrastructureImpl {
             email: ActiveValue::set(request.email),
             ..Default::default()
         };
-        let _res = Group::insert(group)
+        let _res = GroupEntity::insert(group)
             .exec(&db)
             .await
-            .map_err(|_| Status::already_exists("group already exists"));
+            .map_err(|_| Status::already_exists("group already exists"))?;
         Ok(())
     }
 
@@ -119,6 +113,25 @@ impl InfrastructureImpl {
             .map_err(|_| Status::already_exists("user already exists"))?;
         Ok(())
     }
+
+    pub async fn get_all_group(&self) -> Result<GetAllGroupResponse, Status> {
+        let database_url = "postgres://postgres:password@0.0.0.0:5432/example";
+        let db: DatabaseConnection = Database::connect(database_url)
+            .await
+            .map_err(|_| Status::already_exists("DataBase connection error"))?;
+        let groups = GroupEntity::find()
+            .all(&db)
+            .await
+            .map_err(|_| Status::not_found("groups not found"))?;
+        let response = groups
+            .iter()
+            .map(|group| Group {
+                group_id: group.group_id.clone(),
+                group_name: group.group_name.clone(),
+            })
+            .collect();
+        Ok(GetAllGroupResponse { groups: response })
+    }
 }
 
 fn generate_claims(user_id: i32) -> Result<BTreeMap<&'static str, String>, Status> {
@@ -127,9 +140,12 @@ fn generate_claims(user_id: i32) -> Result<BTreeMap<&'static str, String>, Statu
     claims.insert("sub", user_id.to_string());
 
     let current_timestamp = SystemTime::now().duration_since(UNIX_EPOCH);
+    let exp = SystemTime::now()
+        .add(Duration::from_secs(3600))
+        .duration_since(UNIX_EPOCH);
 
     claims.insert("iat", current_timestamp.unwrap().as_secs().to_string());
-    claims.insert("exp", String::from("3600"));
+    claims.insert("exp", exp.unwrap().as_secs().to_string());
 
     Ok(claims)
 }
