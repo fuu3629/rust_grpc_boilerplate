@@ -4,8 +4,8 @@ use crate::job_manage;
 use bcrypt::verify;
 use hmac::{Hmac, Mac};
 use job_manage::{
-    job_manage_service_server::JobManageService, CreateGroupRequest, CreateShiftRequest,
-    CreateUserRequest, CreateUserResponse, LoginUserRequest, LoginUserResponse,
+    CreateGroupRequest, CreateShiftRequest, CreateUserRequest, CreateUserResponse,
+    LoginUserRequest, LoginUserResponse,
 };
 use jwt::{SignWithKey, VerifyWithKey};
 use sea_orm::*;
@@ -99,6 +99,7 @@ impl InfrastructureImpl {
         let db: DatabaseConnection = Database::connect(database_url)
             .await
             .map_err(|_| Status::already_exists("DataBase connection error"))?;
+        //TODO check if user exists
         let user_id = request.user_id;
         let dates = request.shifts.clone();
         let shifts = dates

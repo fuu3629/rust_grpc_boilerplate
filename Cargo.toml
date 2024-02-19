@@ -8,13 +8,13 @@ name = "server"
 path = "src/main.rs"
 
 [dependencies]
-tonic = "0.8"
-prost = "0.11"
+tonic = "0.10.2"
+prost = "0.12.1"
 tokio = { version = "1.24", features = ["macros", "rt-multi-thread"] }
 tokio-stream = { version = "0.1", features = ["net"] }
 futures = "0.3"
 clap = { version = "4.1.4", features = ["derive"] }
-tonic-reflection = "0.6.0"
+tonic-reflection = "0.10.2"
 protoc-rust = "2.28.0"
 sea-orm = { version = "0.12.1", features = [ "sqlx-postgres", "runtime-async-std-native-tls", "macros" ], default-features = false }
 dotenvy = "0.15.7"
@@ -22,9 +22,11 @@ bcrypt = "0.15.0"
 jwt = "0.16.0"
 hmac = "0.12.1"
 sha2 = "0.10.8"
+tonic-web = "0.10.2"
+tower-http = { version = "0.3.2", features=["full"]}
 
 [build-dependencies]
-tonic-build = "0.8"
+tonic-build = "0.10.2"
 
 [dev-dependencies]
 uuid = { version = "1.2.2", features = ["v4", "fast-rng"] }

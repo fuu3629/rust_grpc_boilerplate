@@ -8,6 +8,8 @@ use job_manage::{
 use std::net::SocketAddr;
 use tonic::{transport::Server, Request, Response, Status};
 use tonic_reflection::server::Builder;
+use tonic_web::GrpcWebLayer;
+use tower_http::cors::CorsLayer;
 
 #[derive(Default)]
 pub struct MyJobManage {
@@ -21,11 +23,14 @@ impl MyJobManage {
         }
     }
     pub async fn run_server(self, addr: SocketAddr) -> Result<(), Box<dyn std::error::Error>> {
-        // let allow_cors = CorsLayer::new()
-        //     .allow_origin(tower_http::cors::Any)
-        //     .allow_headers(tower_http::cors::Any)
-        //     .allow_methods(tower_http::cors::Any);
+        let allow_cors = CorsLayer::new()
+            .allow_origin(tower_http::cors::Any)
+            .allow_headers(tower_http::cors::Any)
+            .allow_methods(tower_http::cors::Any);
         Server::builder()
+            .accept_http1(true) // gRPC-webに対応するために必要
+            .layer(allow_cors) // CORSに対応するために必要
+            .layer(GrpcWebLayer::new()) // gRPC-webに対応するために必要
             .add_service(JobManageServiceServer::new(self))
             .add_service(
                 Builder::configure()
@@ -37,7 +42,6 @@ impl MyJobManage {
             )
             .serve(addr)
             .await?;
-
         Ok(())
     }
 }
