@@ -3,8 +3,8 @@ use crate::{infrastructure, job_manage};
 use job_manage::job_manage_service_server::JobManageServiceServer;
 use job_manage::{
     job_manage_service_server::JobManageService, CreateGroupRequest, CreateShiftRequest,
-    CreateUserRequest, CreateUserResponse, GetAllGroupResponse, LoginUserRequest,
-    LoginUserResponse,
+    CreateUserRequest, CreateUserResponse, GetAllGroupResponse, GetShiftsResponse,
+    LoginUserRequest, LoginUserResponse,
 };
 use std::net::SocketAddr;
 use tonic::{transport::Server, Request, Response, Status};
@@ -107,5 +107,25 @@ impl JobManageService for MyJobManage {
     ) -> Result<Response<GetAllGroupResponse>, Status> {
         let response = self.infrastructure.get_all_group().await?;
         Ok(Response::new(response))
+    }
+
+    async fn get_shifts(
+        &self,
+        request: Request<()>,
+    ) -> Result<Response<GetShiftsResponse>, Status> {
+        println!("{:?}", request.metadata());
+        let token = request
+            .metadata()
+            .get("authorization")
+            .ok_or(Status::unauthenticated("No access token specified"))?
+            .to_str()
+            .map_err(|_| Status::unauthenticated("Invalid access token"))?;
+        let claim = match infrastructure::infrastructure::verify_token(token) {
+            Ok(claim) => claim,
+            Err(_) => return Err(Status::unauthenticated("Invalid token")),
+        };
+        let user_id = claim["sub"].as_str().parse::<i32>().unwrap();
+        let res = self.infrastructure.get_shifts(user_id).await?;
+        Ok(Response::new(res))
     }
 }

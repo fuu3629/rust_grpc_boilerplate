@@ -27,6 +27,28 @@ proto3.util.setEnumType(Permission, "jobManage.Permission", [
 ]);
 
 /**
+ * シフトが認証されているかどうかのenum
+ *
+ * @generated from enum jobManage.ShiftStatus
+ */
+export enum ShiftStatus {
+  /**
+   * @generated from enum value: UNAUTHORIZED = 0;
+   */
+  UNAUTHORIZED = 0,
+
+  /**
+   * @generated from enum value: AUTHORIZED = 1;
+   */
+  AUTHORIZED = 1,
+}
+// Retrieve enum metadata with: proto3.getEnumType(ShiftStatus)
+proto3.util.setEnumType(ShiftStatus, "jobManage.ShiftStatus", [
+  { no: 0, name: "UNAUTHORIZED" },
+  { no: 1, name: "AUTHORIZED" },
+]);
+
+/**
  * @generated from message jobManage.CreateGroupRequest
  */
 export class CreateGroupRequest extends Message<CreateGroupRequest> {
@@ -297,23 +319,111 @@ export class Date extends Message<Date> {
 }
 
 /**
+ * @generated from message jobManage.Time
+ */
+export class Time extends Message<Time> {
+  /**
+   * @generated from field: int32 hour = 1;
+   */
+  hour = 0;
+
+  /**
+   * @generated from field: int32 minute = 2;
+   */
+  minute = 0;
+
+  constructor(data?: PartialMessage<Time>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "jobManage.Time";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "hour", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 2, name: "minute", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Time {
+    return new Time().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Time {
+    return new Time().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Time {
+    return new Time().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: Time | PlainMessage<Time> | undefined, b: Time | PlainMessage<Time> | undefined): boolean {
+    return proto3.util.equals(Time, a, b);
+  }
+}
+
+/**
+ * @generated from message jobManage.Shift
+ */
+export class Shift extends Message<Shift> {
+  /**
+   * @generated from field: jobManage.Date date = 1;
+   */
+  date?: Date;
+
+  /**
+   * @generated from field: jobManage.Time start = 2;
+   */
+  start?: Time;
+
+  /**
+   * @generated from field: jobManage.Time end = 3;
+   */
+  end?: Time;
+
+  /**
+   * @generated from field: jobManage.ShiftStatus status = 4;
+   */
+  status = ShiftStatus.UNAUTHORIZED;
+
+  constructor(data?: PartialMessage<Shift>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "jobManage.Shift";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "date", kind: "message", T: Date },
+    { no: 2, name: "start", kind: "message", T: Time },
+    { no: 3, name: "end", kind: "message", T: Time },
+    { no: 4, name: "status", kind: "enum", T: proto3.getEnumType(ShiftStatus) },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Shift {
+    return new Shift().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Shift {
+    return new Shift().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Shift {
+    return new Shift().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: Shift | PlainMessage<Shift> | undefined, b: Shift | PlainMessage<Shift> | undefined): boolean {
+    return proto3.util.equals(Shift, a, b);
+  }
+}
+
+/**
  * @generated from message jobManage.CreateShiftRequest
  */
 export class CreateShiftRequest extends Message<CreateShiftRequest> {
   /**
-   * @generated from field: string belong = 1;
+   * @generated from field: repeated jobManage.Shift shifts = 1;
    */
-  belong = "";
-
-  /**
-   * @generated from field: int32 userId = 2;
-   */
-  userId = 0;
-
-  /**
-   * @generated from field: repeated jobManage.Date shifts = 3;
-   */
-  shifts: Date[] = [];
+  shifts: Shift[] = [];
 
   constructor(data?: PartialMessage<CreateShiftRequest>) {
     super();
@@ -323,9 +433,7 @@ export class CreateShiftRequest extends Message<CreateShiftRequest> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "jobManage.CreateShiftRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "belong", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "userId", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 3, name: "shifts", kind: "message", T: Date, repeated: true },
+    { no: 1, name: "shifts", kind: "message", T: Shift, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateShiftRequest {
@@ -342,6 +450,49 @@ export class CreateShiftRequest extends Message<CreateShiftRequest> {
 
   static equals(a: CreateShiftRequest | PlainMessage<CreateShiftRequest> | undefined, b: CreateShiftRequest | PlainMessage<CreateShiftRequest> | undefined): boolean {
     return proto3.util.equals(CreateShiftRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message jobManage.GetShiftsResponse
+ */
+export class GetShiftsResponse extends Message<GetShiftsResponse> {
+  /**
+   * @generated from field: repeated jobManage.Shift shifts = 1;
+   */
+  shifts: Shift[] = [];
+
+  /**
+   * @generated from field: int32 total_time = 2;
+   */
+  totalTime = 0;
+
+  constructor(data?: PartialMessage<GetShiftsResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "jobManage.GetShiftsResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "shifts", kind: "message", T: Shift, repeated: true },
+    { no: 2, name: "total_time", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetShiftsResponse {
+    return new GetShiftsResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetShiftsResponse {
+    return new GetShiftsResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetShiftsResponse {
+    return new GetShiftsResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetShiftsResponse | PlainMessage<GetShiftsResponse> | undefined, b: GetShiftsResponse | PlainMessage<GetShiftsResponse> | undefined): boolean {
+    return proto3.util.equals(GetShiftsResponse, a, b);
   }
 }
 

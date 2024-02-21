@@ -21,7 +21,6 @@ export interface CreateAccountFormProps {
 
 export function CreateAccountForm({ group, setToken }: CreateAccountFormProps) {
   const { register, onSubmit, formState } = useCreateAccountForm(setToken);
-  console.log(formState.errors);
   return (
     <Flex direction="column" background="gray.100" padding={12} rounded={6}>
       <form onSubmit={onSubmit}>

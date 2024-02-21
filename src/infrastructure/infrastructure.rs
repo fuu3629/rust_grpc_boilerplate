@@ -1,8 +1,9 @@
-use super::entities::prelude::{Group as GroupEntity, Shift, User};
+use super::entities::prelude::{Group as GroupEntity, Shift as ShiftEntity, User};
 use super::entities::*;
 use crate::job_manage::{
-    CreateGroupRequest, CreateShiftRequest, CreateUserRequest, CreateUserResponse,
-    GetAllGroupResponse, Group, LoginUserRequest, LoginUserResponse,
+    CreateGroupRequest, CreateShiftRequest, CreateUserRequest, CreateUserResponse, Date,
+    GetAllGroupResponse, GetShiftsResponse, Group, LoginUserRequest, LoginUserResponse, Shift,
+    Time,
 };
 use bcrypt::verify;
 use hmac::{Hmac, Mac};
@@ -98,8 +99,6 @@ impl InfrastructureImpl {
         let db: DatabaseConnection = Database::connect(database_url)
             .await
             .map_err(|_| Status::already_exists("DataBase connection error"))?;
-        //TODO check if user exists
-        // let user_id = request.user_id;
         let dates = request.shifts.clone();
         let shifts = dates
             .iter()
@@ -116,7 +115,7 @@ impl InfrastructureImpl {
                 ..Default::default()
             })
             .collect::<Vec<shift::ActiveModel>>();
-        let _res = Shift::insert_many(shifts)
+        let _res = ShiftEntity::insert_many(shifts)
             .exec(&db)
             .await
             .map_err(|_| Status::already_exists("user already exists"))?;
@@ -140,6 +139,57 @@ impl InfrastructureImpl {
             })
             .collect();
         Ok(GetAllGroupResponse { groups: response })
+    }
+
+    pub async fn get_shifts(&self, user_id: i32) -> Result<GetShiftsResponse, Status> {
+        let database_url = "postgres://postgres:password@0.0.0.0:5432/example";
+        let db: DatabaseConnection = Database::connect(database_url)
+            .await
+            .map_err(|_| Status::already_exists("DataBase connection error"))?;
+
+        let shifts = ShiftEntity::find()
+            .filter(shift::Column::UserId.eq(user_id))
+            .all(&db)
+            .await
+            .map_err(|_| Status::not_found("shifts not found"))?;
+
+        let shifts = shifts
+            .clone()
+            .iter()
+            .map(|shift| Shift {
+                status: if shift.assigned { 1 } else { 0 },
+                date: Some(Date {
+                    year: shift.year.clone(),
+                    month: shift.month.clone(),
+                    day: shift.day.clone(),
+                }),
+                start: Some(Time {
+                    hour: shift.start_hour.clone(),
+                    minute: shift.start_minute.clone(),
+                }),
+                end: Some(Time {
+                    hour: shift.end_hour.clone(),
+                    minute: shift.end_minute.clone(),
+                }),
+            })
+            .collect::<Vec<Shift>>();
+
+        let total_time = shifts
+            .clone()
+            .iter()
+            .map(|shift| {
+                let shift_start = shift.start.clone().unwrap();
+                let shift_end = shift.end.clone().unwrap();
+                let start = shift_start.hour * 60 + shift_start.minute;
+                let end = shift_end.hour * 60 + shift_end.minute;
+                end - start
+            })
+            .sum::<i32>();
+        let res = GetShiftsResponse {
+            shifts: shifts,
+            total_time: total_time,
+        };
+        Ok(res)
     }
 }
 
@@ -174,8 +224,10 @@ pub fn verify_token(token: &str) -> Result<BTreeMap<String, String>, Status> {
     let key: Hmac<Sha256> = Hmac::new_from_slice(app_key.as_bytes())
         .map_err(|_| Status::failed_precondition("failed to create key"))?;
 
-    let claim: BTreeMap<String, String> = token.verify_with_key(&key).unwrap();
-    println!("{:?}", claim);
+    let claim: BTreeMap<String, String> = token
+        .verify_with_key(&key)
+        .map_err(|_| Status::failed_precondition("failed to verify"))
+        .unwrap();
 
     Ok(claim)
 }

@@ -9,6 +9,7 @@ service jobManageService {
     rpc loginUser (LoginUserRequest) returns (LoginUserResponse);
     rpc createShift (CreateShiftRequest) returns (google.protobuf.Empty);
     rpc getAllGroup (google.protobuf.Empty) returns (GetAllGroupResponse);
+    rpc getShifts (google.protobuf.Empty) returns (GetShiftsResponse);
 }
 
 message CreateGroupRequest {
@@ -51,14 +52,25 @@ message Time {
     int32 hour = 1;
     int32 minute = 2;
 }
+//シフトが認証されているかどうかのenum
+enum ShiftStatus {
+    UNAUTHORIZED = 0;
+    AUTHORIZED = 1;
+}
 message Shift {
     Date date = 1;
     Time start = 2;
     Time end = 3;
+    ShiftStatus status = 4;
 }
 
 message CreateShiftRequest {
     repeated Shift shifts = 1;
+}
+
+message GetShiftsResponse {
+    repeated Shift shifts = 1;
+    int32 total_time = 2;
 }
 
 message Group{
@@ -69,3 +81,4 @@ message Group{
 message GetAllGroupResponse {
     repeated Group groups = 1;
 }
+

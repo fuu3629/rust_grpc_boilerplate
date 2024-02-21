@@ -3,8 +3,9 @@ import type { AppProps } from "next/app";
 import { ChakraProvider } from "@chakra-ui/react";
 import { NextPageContext } from "next";
 import { parseCookies } from "nookies";
-import { useEffect } from "react";
+import { useEffect, createContext } from "react";
 import { useRouter } from "next/router";
+import { CokiesContext } from "./api/CokiesContext";
 
 export default function App(
   { Component, pageProps }: AppProps,
@@ -35,7 +36,9 @@ export default function App(
   }, []);
   return (
     <ChakraProvider>
-      <Component {...pageProps} />
+      <CokiesContext.Provider value={cookies}>
+        <Component {...pageProps} />
+      </CokiesContext.Provider>
     </ChakraProvider>
   );
 }
