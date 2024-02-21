@@ -12,7 +12,7 @@ use sha2::Sha256;
 use std::ops::Add;
 use std::time::Duration;
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::BTreeMap,
     env,
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -106,9 +106,13 @@ impl InfrastructureImpl {
             .map(|shift| shift::ActiveModel {
                 user_id: ActiveValue::set(user_id),
                 assigned: ActiveValue::set(false),
-                year: ActiveValue::set(shift.year),
-                month: ActiveValue::set(shift.month),
-                day: ActiveValue::set(shift.day),
+                year: ActiveValue::set(shift.clone().date.unwrap().year),
+                month: ActiveValue::set(shift.clone().date.unwrap().month),
+                day: ActiveValue::set(shift.clone().date.unwrap().day),
+                start_hour: ActiveValue::set(shift.clone().start.unwrap().hour),
+                start_minute: ActiveValue::set(shift.clone().start.unwrap().minute),
+                end_hour: ActiveValue::set(shift.clone().end.unwrap().hour),
+                end_minute: ActiveValue::set(shift.clone().end.unwrap().minute),
                 ..Default::default()
             })
             .collect::<Vec<shift::ActiveModel>>();

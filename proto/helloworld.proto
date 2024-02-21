@@ -47,11 +47,18 @@ message Date {
     int32 month = 2;
     int32 day = 3;
 }
+message Time {
+    int32 hour = 1;
+    int32 minute = 2;
+}
+message Shift {
+    Date date = 1;
+    Time start = 2;
+    Time end = 3;
+}
 
 message CreateShiftRequest {
-    string belong = 1;
-    int32 userId = 2;
-    repeated Date shifts = 3;
+    repeated Shift shifts = 1;
 }
 
 message Group{

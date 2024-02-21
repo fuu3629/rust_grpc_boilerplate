@@ -12,6 +12,10 @@ pub struct Model {
     pub year: i32,
     pub month: i32,
     pub day: i32,
+    pub start_hour: i32,
+    pub start_minute: i32,
+    pub end_hour: i32,
+    pub end_minute: i32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
