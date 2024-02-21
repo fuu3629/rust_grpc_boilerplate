@@ -76,6 +76,7 @@ impl InfrastructureImpl {
         let db: DatabaseConnection = Database::connect(database_url)
             .await
             .map_err(|_| Status::permission_denied("DataBase connection error"))?;
+        //TODO グループ名をユニークにする
         let group = group::ActiveModel {
             group_name: ActiveValue::set(request.group_name),
             email: ActiveValue::set(request.email),
@@ -88,13 +89,17 @@ impl InfrastructureImpl {
         Ok(())
     }
 
-    pub async fn create_shift(&self, request: CreateShiftRequest) -> Result<(), Status> {
+    pub async fn create_shift(
+        &self,
+        request: CreateShiftRequest,
+        user_id: i32,
+    ) -> Result<(), Status> {
         let database_url = "postgres://postgres:password@0.0.0.0:5432/example";
         let db: DatabaseConnection = Database::connect(database_url)
             .await
             .map_err(|_| Status::already_exists("DataBase connection error"))?;
         //TODO check if user exists
-        let user_id = request.user_id;
+        // let user_id = request.user_id;
         let dates = request.shifts.clone();
         let shifts = dates
             .iter()
@@ -159,14 +164,14 @@ fn generate_token(user_id: i32) -> Result<String, Status> {
     Ok(access_token)
 }
 
-pub fn verify_token(token: &str) -> Result<bool, Status> {
+pub fn verify_token(token: &str) -> Result<BTreeMap<String, String>, Status> {
     let app_key: String = env::var("APP_KEY").expect("env APP_KEY is not defined");
 
     let key: Hmac<Sha256> = Hmac::new_from_slice(app_key.as_bytes())
         .map_err(|_| Status::failed_precondition("failed to create key"))?;
 
-    Ok(token
-        .verify_with_key(&key)
-        .map(|_: HashMap<String, String>| true)
-        .unwrap_or(false))
+    let claim: BTreeMap<String, String> = token.verify_with_key(&key).unwrap();
+    println!("{:?}", claim);
+
+    Ok(claim)
 }

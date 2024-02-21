@@ -78,13 +78,14 @@ impl JobManageService for MyJobManage {
             .ok_or(Status::unauthenticated("No access token specified"))?
             .to_str()
             .map_err(|_| Status::unauthenticated("Invalid access token"))?;
-        match infrastructure::infrastructure::verify_token(token) {
-            Ok(true) => (),
-            Err(_) | Ok(false) => return Err(Status::unauthenticated("Invalid token")),
-        }
+        let claim = match infrastructure::infrastructure::verify_token(token) {
+            Ok(claim) => claim,
+            Err(_) => return Err(Status::unauthenticated("Invalid token")),
+        };
+        let user_id = claim["sub"].as_str().parse::<i32>().unwrap();
         let _res = self
             .infrastructure
-            .create_shift(request.into_inner())
+            .create_shift(request.into_inner(), user_id)
             .await?;
         Ok(Response::new(()))
     }
