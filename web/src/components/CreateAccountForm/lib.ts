@@ -39,7 +39,6 @@ export const useCreateAccountForm = (
       password: data.password,
     };
     const res = await client.createUser(req);
-    console.log(res);
     setToken(res.token);
     setCookie(null, "auth", res.token, {
       maxAge: 60 * 60,

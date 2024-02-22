@@ -1,5 +1,6 @@
 use super::entities::prelude::{Group as GroupEntity, Shift as ShiftEntity, User};
 use super::entities::*;
+use super::error::InfrastructureError;
 use crate::job_manage::{
     CreateGroupRequest, CreateShiftRequest, CreateUserRequest, CreateUserResponse, Date,
     GetAllGroupResponse, GetShiftsResponse, Group, LoginUserRequest, LoginUserResponse, Shift,
@@ -28,13 +29,10 @@ impl InfrastructureImpl {
     pub async fn create_user(
         &self,
         request: CreateUserRequest,
-    ) -> Result<CreateUserResponse, Status> {
+    ) -> Result<CreateUserResponse, InfrastructureError> {
         let database_url = "postgres://postgres:password@0.0.0.0:5432/example";
-        let db: DatabaseConnection = Database::connect(database_url)
-            .await
-            .map_err(|_| Status::already_exists("user already exist"))?;
-        let password = bcrypt::hash(request.password, 10)
-            .map_err(|_| Status::unknown("Error while creating the user"))?;
+        let db: DatabaseConnection = Database::connect(database_url).await?;
+        let password = bcrypt::hash(request.password, 10)?;
         let user = user::ActiveModel {
             user_name: ActiveValue::set(request.user_name),
             email: ActiveValue::set(request.email),
@@ -43,50 +41,49 @@ impl InfrastructureImpl {
             permission: ActiveValue::set(request.permission),
             ..Default::default()
         };
-        let _res = User::insert(user)
-            .exec(&db)
-            .await
-            .map_err(|_| Status::already_exists("user already exists"))?;
+        let _res = User::insert(user).exec(&db).await?;
         let user_id = _res.last_insert_id;
         let token = generate_token(user_id)?;
         Ok(CreateUserResponse { token: token })
     }
 
-    pub async fn login_user(&self, request: LoginUserRequest) -> Result<LoginUserResponse, Status> {
+    pub async fn login_user(
+        &self,
+        request: LoginUserRequest,
+    ) -> Result<LoginUserResponse, InfrastructureError> {
         let database_url = "postgres://postgres:password@0.0.0.0:5432/example";
-        let db: DatabaseConnection = Database::connect(database_url)
-            .await
-            .map_err(|_| Status::permission_denied("DataBase connection error"))?;
+        let db: DatabaseConnection = Database::connect(database_url).await?;
         let user = User::find()
             .filter(user::Column::Email.eq(request.email))
             .one(&db)
-            .await
-            .map_err(|_| Status::not_found("such group is not exist"))?
+            .await?
             .unwrap();
         match verify(request.password, &user.password) {
             Ok(true) => {
                 let token = generate_token(user.user_id)?;
                 Ok(LoginUserResponse { token: token })
             }
-            Ok(false) | Err(_) => return Err(Status::permission_denied("password is not correct")),
+            Ok(false) | Err(_) => {
+                return Err(InfrastructureError::JwtError(
+                    jwt::error::Error::InvalidSignature,
+                ));
+            }
         }
     }
 
-    pub async fn create_group(&self, request: CreateGroupRequest) -> Result<(), Status> {
+    pub async fn create_group(
+        &self,
+        request: CreateGroupRequest,
+    ) -> Result<(), InfrastructureError> {
         let database_url = "postgres://postgres:password@0.0.0.0:5432/example";
-        let db: DatabaseConnection = Database::connect(database_url)
-            .await
-            .map_err(|_| Status::permission_denied("DataBase connection error"))?;
+        let db: DatabaseConnection = Database::connect(database_url).await?;
         //TODO グループ名をユニークにする
         let group = group::ActiveModel {
             group_name: ActiveValue::set(request.group_name),
             email: ActiveValue::set(request.email),
             ..Default::default()
         };
-        let _res = GroupEntity::insert(group)
-            .exec(&db)
-            .await
-            .map_err(|_| Status::already_exists("group already exists"))?;
+        let _res = GroupEntity::insert(group).exec(&db).await?;
         Ok(())
     }
 
@@ -94,11 +91,9 @@ impl InfrastructureImpl {
         &self,
         request: CreateShiftRequest,
         user_id: i32,
-    ) -> Result<(), Status> {
+    ) -> Result<(), InfrastructureError> {
         let database_url = "postgres://postgres:password@0.0.0.0:5432/example";
-        let db: DatabaseConnection = Database::connect(database_url)
-            .await
-            .map_err(|_| Status::already_exists("DataBase connection error"))?;
+        let db: DatabaseConnection = Database::connect(database_url).await?;
         let dates = request.shifts.clone();
         let shifts = dates
             .iter()
@@ -115,22 +110,14 @@ impl InfrastructureImpl {
                 ..Default::default()
             })
             .collect::<Vec<shift::ActiveModel>>();
-        let _res = ShiftEntity::insert_many(shifts)
-            .exec(&db)
-            .await
-            .map_err(|_| Status::already_exists("user already exists"))?;
+        let _res = ShiftEntity::insert_many(shifts).exec(&db).await?;
         Ok(())
     }
 
-    pub async fn get_all_group(&self) -> Result<GetAllGroupResponse, Status> {
+    pub async fn get_all_group(&self) -> Result<GetAllGroupResponse, InfrastructureError> {
         let database_url = "postgres://postgres:password@0.0.0.0:5432/example";
-        let db: DatabaseConnection = Database::connect(database_url)
-            .await
-            .map_err(|_| Status::already_exists("DataBase connection error"))?;
-        let groups = GroupEntity::find()
-            .all(&db)
-            .await
-            .map_err(|_| Status::not_found("groups not found"))?;
+        let db: DatabaseConnection = Database::connect(database_url).await?;
+        let groups = GroupEntity::find().all(&db).await?;
         let response = groups
             .iter()
             .map(|group| Group {
@@ -141,17 +128,14 @@ impl InfrastructureImpl {
         Ok(GetAllGroupResponse { groups: response })
     }
 
-    pub async fn get_shifts(&self, user_id: i32) -> Result<GetShiftsResponse, Status> {
+    pub async fn get_shifts(&self, user_id: i32) -> Result<GetShiftsResponse, InfrastructureError> {
         let database_url = "postgres://postgres:password@0.0.0.0:5432/example";
-        let db: DatabaseConnection = Database::connect(database_url)
-            .await
-            .map_err(|_| Status::already_exists("DataBase connection error"))?;
+        let db: DatabaseConnection = Database::connect(database_url).await?;
 
         let shifts = ShiftEntity::find()
             .filter(shift::Column::UserId.eq(user_id))
             .all(&db)
-            .await
-            .map_err(|_| Status::not_found("shifts not found"))?;
+            .await?;
 
         let shifts = shifts
             .clone()
@@ -193,7 +177,7 @@ impl InfrastructureImpl {
     }
 }
 
-fn generate_claims(user_id: i32) -> Result<BTreeMap<&'static str, String>, Status> {
+fn generate_claims(user_id: i32) -> Result<BTreeMap<&'static str, String>, InfrastructureError> {
     let mut claims: BTreeMap<&str, String> = BTreeMap::new();
 
     claims.insert("sub", user_id.to_string());
@@ -209,13 +193,13 @@ fn generate_claims(user_id: i32) -> Result<BTreeMap<&'static str, String>, Statu
     Ok(claims)
 }
 
-fn generate_token(user_id: i32) -> Result<String, Status> {
+fn generate_token(user_id: i32) -> Result<String, InfrastructureError> {
     let app_key: String = env::var("APP_KEY").expect("env APP_KEY is not defined");
     let key: Hmac<Sha256> =
         Hmac::new_from_slice(app_key.as_bytes()).expect("failed to create key from app key");
-    let claims = generate_claims(user_id).expect("failed to create claims");
-    let access_token = claims.sign_with_key(&key).expect("fial to create token");
-    Ok(access_token)
+    let claims = generate_claims(user_id)?;
+    let acces_token = claims.sign_with_key(&key)?;
+    Ok(acces_token)
 }
 
 pub fn verify_token(token: &str) -> Result<BTreeMap<String, String>, Status> {
