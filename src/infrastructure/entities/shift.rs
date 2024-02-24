@@ -9,13 +9,8 @@ pub struct Model {
     pub shift_id: i32,
     pub user_id: i32,
     pub assigned: bool,
-    pub year: i32,
-    pub month: i32,
-    pub day: i32,
-    pub start_hour: i32,
-    pub start_minute: i32,
-    pub end_hour: i32,
-    pub end_minute: i32,
+    pub start: String,
+    pub end: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

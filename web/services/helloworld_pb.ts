@@ -270,115 +270,18 @@ export class LoginUserResponse extends Message<LoginUserResponse> {
 }
 
 /**
- * @generated from message jobManage.Date
- */
-export class Date extends Message<Date> {
-  /**
-   * @generated from field: int32 year = 1;
-   */
-  year = 0;
-
-  /**
-   * @generated from field: int32 month = 2;
-   */
-  month = 0;
-
-  /**
-   * @generated from field: int32 day = 3;
-   */
-  day = 0;
-
-  constructor(data?: PartialMessage<Date>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "jobManage.Date";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "year", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 2, name: "month", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 3, name: "day", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Date {
-    return new Date().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Date {
-    return new Date().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Date {
-    return new Date().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: Date | PlainMessage<Date> | undefined, b: Date | PlainMessage<Date> | undefined): boolean {
-    return proto3.util.equals(Date, a, b);
-  }
-}
-
-/**
- * @generated from message jobManage.Time
- */
-export class Time extends Message<Time> {
-  /**
-   * @generated from field: int32 hour = 1;
-   */
-  hour = 0;
-
-  /**
-   * @generated from field: int32 minute = 2;
-   */
-  minute = 0;
-
-  constructor(data?: PartialMessage<Time>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
-
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "jobManage.Time";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "hour", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-    { no: 2, name: "minute", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
-  ]);
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Time {
-    return new Time().fromBinary(bytes, options);
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Time {
-    return new Time().fromJson(jsonValue, options);
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Time {
-    return new Time().fromJsonString(jsonString, options);
-  }
-
-  static equals(a: Time | PlainMessage<Time> | undefined, b: Time | PlainMessage<Time> | undefined): boolean {
-    return proto3.util.equals(Time, a, b);
-  }
-}
-
-/**
  * @generated from message jobManage.Shift
  */
 export class Shift extends Message<Shift> {
   /**
-   * @generated from field: jobManage.Date date = 1;
+   * @generated from field: string start = 1;
    */
-  date?: Date;
+  start = "";
 
   /**
-   * @generated from field: jobManage.Time start = 2;
+   * @generated from field: string end = 2;
    */
-  start?: Time;
-
-  /**
-   * @generated from field: jobManage.Time end = 3;
-   */
-  end?: Time;
+  end = "";
 
   /**
    * @generated from field: jobManage.ShiftStatus status = 4;
@@ -393,9 +296,8 @@ export class Shift extends Message<Shift> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "jobManage.Shift";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "date", kind: "message", T: Date },
-    { no: 2, name: "start", kind: "message", T: Time },
-    { no: 3, name: "end", kind: "message", T: Time },
+    { no: 1, name: "start", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "end", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "status", kind: "enum", T: proto3.getEnumType(ShiftStatus) },
   ]);
 

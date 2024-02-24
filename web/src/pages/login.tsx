@@ -9,7 +9,7 @@ export default function Login() {
     window.location.href = "/createNewAccount";
   };
   return (
-    <Flex height="100vh" alignItems="center" justifyContent="center">
+    <Flex height="100vh" alignItems="center" justifyContent="center" w="100%">
       <LoginForm></LoginForm>
     </Flex>
   );

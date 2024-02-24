@@ -20,13 +20,8 @@ impl MigrationTrait for Migration {
                     )
                     .col(ColumnDef::new(Shift::UserId).integer().not_null())
                     .col(ColumnDef::new(Shift::Assigned).boolean().not_null())
-                    .col(ColumnDef::new(Shift::Year).integer().not_null())
-                    .col(ColumnDef::new(Shift::Month).integer().not_null())
-                    .col(ColumnDef::new(Shift::Day).integer().not_null())
-                    .col(ColumnDef::new(Shift::StartHour).integer().not_null())
-                    .col(ColumnDef::new(Shift::StartMinute).integer().not_null())
-                    .col(ColumnDef::new(Shift::EndHour).integer().not_null())
-                    .col(ColumnDef::new(Shift::EndMinute).integer().not_null())
+                    .col(ColumnDef::new(Shift::Start).string().not_null())
+                    .col(ColumnDef::new(Shift::End).string().not_null())
                     .to_owned(),
             )
             .await
@@ -45,11 +40,6 @@ enum Shift {
     ShiftId,
     UserId,
     Assigned,
-    Year,
-    Month,
-    Day,
-    StartHour,
-    StartMinute,
-    EndHour,
-    EndMinute,
+    Start,
+    End,
 }

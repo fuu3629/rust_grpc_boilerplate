@@ -2,9 +2,8 @@ use super::entities::prelude::{Group as GroupEntity, Shift as ShiftEntity, User}
 use super::entities::*;
 use super::error::InfrastructureError;
 use crate::job_manage::{
-    CreateGroupRequest, CreateShiftRequest, CreateUserRequest, CreateUserResponse, Date,
+    CreateGroupRequest, CreateShiftRequest, CreateUserRequest, CreateUserResponse,
     GetAllGroupResponse, GetShiftsResponse, Group, LoginUserRequest, LoginUserResponse, Shift,
-    Time,
 };
 use bcrypt::verify;
 use hmac::{Hmac, Mac};
@@ -100,13 +99,8 @@ impl InfrastructureImpl {
             .map(|shift| shift::ActiveModel {
                 user_id: ActiveValue::set(user_id),
                 assigned: ActiveValue::set(false),
-                year: ActiveValue::set(shift.clone().date.unwrap().year),
-                month: ActiveValue::set(shift.clone().date.unwrap().month),
-                day: ActiveValue::set(shift.clone().date.unwrap().day),
-                start_hour: ActiveValue::set(shift.clone().start.unwrap().hour),
-                start_minute: ActiveValue::set(shift.clone().start.unwrap().minute),
-                end_hour: ActiveValue::set(shift.clone().end.unwrap().hour),
-                end_minute: ActiveValue::set(shift.clone().end.unwrap().minute),
+                start: ActiveValue::set(shift.start.clone()),
+                end: ActiveValue::set(shift.end.clone()),
                 ..Default::default()
             })
             .collect::<Vec<shift::ActiveModel>>();
@@ -142,33 +136,12 @@ impl InfrastructureImpl {
             .iter()
             .map(|shift| Shift {
                 status: if shift.assigned { 1 } else { 0 },
-                date: Some(Date {
-                    year: shift.year.clone(),
-                    month: shift.month.clone(),
-                    day: shift.day.clone(),
-                }),
-                start: Some(Time {
-                    hour: shift.start_hour.clone(),
-                    minute: shift.start_minute.clone(),
-                }),
-                end: Some(Time {
-                    hour: shift.end_hour.clone(),
-                    minute: shift.end_minute.clone(),
-                }),
+                start: shift.start.clone(),
+                end: shift.end.clone(),
             })
             .collect::<Vec<Shift>>();
 
-        let total_time = shifts
-            .clone()
-            .iter()
-            .map(|shift| {
-                let shift_start = shift.start.clone().unwrap();
-                let shift_end = shift.end.clone().unwrap();
-                let start = shift_start.hour * 60 + shift_start.minute;
-                let end = shift_end.hour * 60 + shift_end.minute;
-                end - start
-            })
-            .sum::<i32>();
+        let total_time = 0;
         let res = GetShiftsResponse {
             shifts: shifts,
             total_time: total_time,
@@ -194,7 +167,8 @@ fn generate_claims(user_id: i32) -> Result<BTreeMap<&'static str, String>, Infra
 }
 
 fn generate_token(user_id: i32) -> Result<String, InfrastructureError> {
-    let app_key: String = env::var("APP_KEY").expect("env APP_KEY is not defined");
+    //TODO: 環境変数から取得する
+    let app_key: String = "9E3CnfSfsi9BGfX3Dea#tkbs#nDj&6d#6Y&jhNa!".to_string();
     let key: Hmac<Sha256> =
         Hmac::new_from_slice(app_key.as_bytes()).expect("failed to create key from app key");
     let claims = generate_claims(user_id)?;
@@ -203,15 +177,12 @@ fn generate_token(user_id: i32) -> Result<String, InfrastructureError> {
 }
 
 pub fn verify_token(token: &str) -> Result<BTreeMap<String, String>, Status> {
-    let app_key: String = env::var("APP_KEY").expect("env APP_KEY is not defined");
+    //TODO: 環境変数から取得する
+    let app_key: String = "9E3CnfSfsi9BGfX3Dea#tkbs#nDj&6d#6Y&jhNa!".to_string();
 
     let key: Hmac<Sha256> = Hmac::new_from_slice(app_key.as_bytes())
         .map_err(|_| Status::failed_precondition("failed to create key"))?;
-
-    let claim: BTreeMap<String, String> = token
+    token
         .verify_with_key(&key)
         .map_err(|_| Status::failed_precondition("failed to verify"))
-        .unwrap();
-
-    Ok(claim)
 }

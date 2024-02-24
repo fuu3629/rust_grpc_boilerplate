@@ -43,24 +43,14 @@ message LoginUserResponse {
     string token = 1;
 }
 
-message Date {
-    int32 year = 1;
-    int32 month = 2;
-    int32 day = 3;
-}
-message Time {
-    int32 hour = 1;
-    int32 minute = 2;
-}
 //シフトが認証されているかどうかのenum
 enum ShiftStatus {
     UNAUTHORIZED = 0;
     AUTHORIZED = 1;
 }
 message Shift {
-    Date date = 1;
-    Time start = 2;
-    Time end = 3;
+    string start = 1;
+    string end = 2;
     ShiftStatus status = 4;
 }
 

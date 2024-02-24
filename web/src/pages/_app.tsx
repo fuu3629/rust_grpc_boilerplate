@@ -1,11 +1,13 @@
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
-import { ChakraProvider } from "@chakra-ui/react";
+import { Box, ChakraProvider, Flex } from "@chakra-ui/react";
 import { NextPageContext } from "next";
 import { parseCookies } from "nookies";
 import { useEffect, createContext } from "react";
 import { useRouter } from "next/router";
 import { CokiesContext } from "./api/CokiesContext";
+import { AppBar } from "@/components/AppBar";
+import { SideBar } from "@/components/SideBar";
 
 export default function App(
   { Component, pageProps }: AppProps,
@@ -37,7 +39,13 @@ export default function App(
   return (
     <ChakraProvider>
       <CokiesContext.Provider value={cookies}>
-        <Component {...pageProps} />
+        <Box h="100vh" w="100vw">
+          <AppBar />
+          <Flex bg="gray.100">
+            <SideBar />
+            <Component {...pageProps} />
+          </Flex>
+        </Box>
       </CokiesContext.Provider>
     </ChakraProvider>
   );

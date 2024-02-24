@@ -24,13 +24,13 @@ export function LoginForm({}: LoginFormProps) {
     <>
       <Flex
         direction="column"
-        background="gray.100"
+        background="gray.200"
         px={12}
         pt={12}
         pb={6}
         rounded={6}
       >
-        <Heading mb={6}>Log in</Heading>{" "}
+        <Heading mb={6}>Log in</Heading>
         <form onSubmit={onSubmit}>
           <HStack mb={6}>
             <Text h="100%" w="150px">
