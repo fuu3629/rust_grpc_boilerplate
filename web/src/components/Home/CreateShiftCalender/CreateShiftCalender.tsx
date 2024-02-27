@@ -3,7 +3,7 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { CreateShiftModal } from "@/components/Home/CreateShiftModal/CreateShiftModal";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { DateSelectArg } from "@fullcalendar/core/index.js";
 import { Shift } from "../../../../services/helloworld_pb";
 import { useClient } from "@/pages/api/ClientProvider";
@@ -20,7 +20,7 @@ export function CreateShiftCalender({}: CreateShiftCalenderProps) {
   //TODO 削除モーダルを作成、モーダルが重ならないようにする
   const dedleModal = useDisclosure();
   const [modalInfo, setModalInfo] = useState("");
-  const [AppliedShifts, setAppliedShifts] = useState<Shift[]>([]);
+  const [appliedShifts, setAppliedShifts] = useState<Shift[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const handleSelect = (selectInfo: DateSelectArg) => {
     setModalInfo(selectInfo.startStr);
@@ -33,6 +33,14 @@ export function CreateShiftCalender({}: CreateShiftCalenderProps) {
         console.log(res);
       });
   };
+
+  useEffect(() => {
+    client
+      .getShifts({}, { headers: { Authorization: token!["auth"] } })
+      .then((res) => {
+        setShifts(res.shifts.filter((shift) => shift.status === 0));
+      });
+  }, []);
   return (
     <Box h="85%" w="100%" bg="white">
       <Flex h="10%">
@@ -47,8 +55,9 @@ export function CreateShiftCalender({}: CreateShiftCalenderProps) {
       </Flex>
       <FullCalendar
         plugins={[dayGridPlugin, interactionPlugin]}
-        events={shifts.map((shift) => ({
+        events={shifts.concat(appliedShifts).map((shift) => ({
           start: shift.start.split("T")[0],
+          end: shift.end.split("T")[0],
           title: `${shift.start
             .split("T")[1]
             .split(":")
