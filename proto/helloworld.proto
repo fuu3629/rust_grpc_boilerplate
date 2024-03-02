@@ -49,8 +49,8 @@ enum ShiftStatus {
     AUTHORIZED = 1;
 }
 message Shift {
-    string start = 1;
-    string end = 2;
+    google.protobuf.Timestamp start = 1;
+    google.protobuf.Timestamp end = 2;
     ShiftStatus status = 4;
 }
 

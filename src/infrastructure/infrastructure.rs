@@ -1,23 +1,14 @@
+use self::user::Model as UserModel;
 use super::entities::prelude::{Group as GroupEntity, Shift as ShiftEntity, User};
 use super::entities::*;
 use super::error::InfrastructureError;
 use crate::job_manage::{
-    CreateGroupRequest, CreateShiftRequest, CreateUserRequest, CreateUserResponse,
-    GetAllGroupResponse, GetShiftsResponse, Group, LoginUserRequest, LoginUserResponse, Shift,
+    CreateGroupRequest, CreateShiftRequest, CreateUserRequest, GetShiftsResponse, Group,
+    LoginUserRequest, Shift,
 };
-use bcrypt::verify;
-use hmac::{Hmac, Mac};
-use jwt::{SignWithKey, VerifyWithKey};
+use chrono::NaiveDateTime;
+use prost_types::Timestamp;
 use sea_orm::*;
-use sha2::Sha256;
-use std::ops::Add;
-use std::time::Duration;
-use std::{
-    collections::BTreeMap,
-    env,
-    time::{SystemTime, UNIX_EPOCH},
-};
-use tonic::Status;
 #[derive(Default)]
 pub struct InfrastructureImpl {}
 
@@ -28,7 +19,7 @@ impl InfrastructureImpl {
     pub async fn create_user(
         &self,
         request: CreateUserRequest,
-    ) -> Result<CreateUserResponse, InfrastructureError> {
+    ) -> Result<i32, InfrastructureError> {
         let database_url = "postgres://postgres:password@0.0.0.0:5432/example";
         let db: DatabaseConnection = Database::connect(database_url).await?;
         let password = bcrypt::hash(request.password, 10)?;
@@ -42,14 +33,13 @@ impl InfrastructureImpl {
         };
         let _res = User::insert(user).exec(&db).await?;
         let user_id = _res.last_insert_id;
-        let token = generate_token(user_id)?;
-        Ok(CreateUserResponse { token: token })
+        Ok(user_id)
     }
 
     pub async fn login_user(
         &self,
         request: LoginUserRequest,
-    ) -> Result<LoginUserResponse, InfrastructureError> {
+    ) -> Result<UserModel, InfrastructureError> {
         let database_url = "postgres://postgres:password@0.0.0.0:5432/example";
         let db: DatabaseConnection = Database::connect(database_url).await?;
         let user = User::find()
@@ -57,17 +47,7 @@ impl InfrastructureImpl {
             .one(&db)
             .await?
             .unwrap();
-        match verify(request.password, &user.password) {
-            Ok(true) => {
-                let token = generate_token(user.user_id)?;
-                Ok(LoginUserResponse { token: token })
-            }
-            Ok(false) | Err(_) => {
-                return Err(InfrastructureError::JwtError(
-                    jwt::error::Error::InvalidSignature,
-                ));
-            }
-        }
+        Ok(user)
     }
 
     pub async fn create_group(
@@ -76,7 +56,6 @@ impl InfrastructureImpl {
     ) -> Result<(), InfrastructureError> {
         let database_url = "postgres://postgres:password@0.0.0.0:5432/example";
         let db: DatabaseConnection = Database::connect(database_url).await?;
-        //TODO グループ名をユニークにする
         let group = group::ActiveModel {
             group_name: ActiveValue::set(request.group_name),
             email: ActiveValue::set(request.email),
@@ -99,8 +78,20 @@ impl InfrastructureImpl {
             .map(|shift| shift::ActiveModel {
                 user_id: ActiveValue::set(user_id),
                 assigned: ActiveValue::set(false),
-                start: ActiveValue::set(shift.start.clone()),
-                end: ActiveValue::set(shift.end.clone()),
+                start: ActiveValue::set(
+                    NaiveDateTime::from_timestamp_opt(
+                        shift.start.clone().unwrap().seconds,
+                        shift.start.clone().unwrap().nanos as u32,
+                    )
+                    .unwrap(),
+                ),
+                end: ActiveValue::set(
+                    NaiveDateTime::from_timestamp_opt(
+                        shift.end.clone().unwrap().seconds,
+                        shift.end.clone().unwrap().nanos as u32,
+                    )
+                    .unwrap(),
+                ),
                 ..Default::default()
             })
             .collect::<Vec<shift::ActiveModel>>();
@@ -108,7 +99,7 @@ impl InfrastructureImpl {
         Ok(())
     }
 
-    pub async fn get_all_group(&self) -> Result<GetAllGroupResponse, InfrastructureError> {
+    pub async fn get_all_group(&self) -> Result<Vec<Group>, InfrastructureError> {
         let database_url = "postgres://postgres:password@0.0.0.0:5432/example";
         let db: DatabaseConnection = Database::connect(database_url).await?;
         let groups = GroupEntity::find().all(&db).await?;
@@ -119,7 +110,7 @@ impl InfrastructureImpl {
                 group_name: group.group_name.clone(),
             })
             .collect();
-        Ok(GetAllGroupResponse { groups: response })
+        Ok(response)
     }
 
     pub async fn get_shifts(&self, user_id: i32) -> Result<GetShiftsResponse, InfrastructureError> {
@@ -136,53 +127,25 @@ impl InfrastructureImpl {
             .iter()
             .map(|shift| Shift {
                 status: if shift.assigned { 1 } else { 0 },
-                start: shift.start.clone(),
-                end: shift.end.clone(),
+                start: Some(Timestamp {
+                    seconds: shift.start.timestamp(),
+                    nanos: 0,
+                }),
+                end: Some(Timestamp {
+                    seconds: shift.end.timestamp(),
+                    nanos: 0,
+                }),
             })
             .collect::<Vec<Shift>>();
 
-        let total_time = 0;
+        let total_time = shifts.iter().fold(0, |acc, shift| {
+            acc + (shift.end.clone().unwrap().seconds - shift.start.clone().unwrap().seconds)
+        });
+
         let res = GetShiftsResponse {
             shifts: shifts,
-            total_time: total_time,
+            total_time: total_time as i32,
         };
         Ok(res)
     }
-}
-
-fn generate_claims(user_id: i32) -> Result<BTreeMap<&'static str, String>, InfrastructureError> {
-    let mut claims: BTreeMap<&str, String> = BTreeMap::new();
-
-    claims.insert("sub", user_id.to_string());
-
-    let current_timestamp = SystemTime::now().duration_since(UNIX_EPOCH);
-    let exp = SystemTime::now()
-        .add(Duration::from_secs(3600))
-        .duration_since(UNIX_EPOCH);
-
-    claims.insert("iat", current_timestamp.unwrap().as_secs().to_string());
-    claims.insert("exp", exp.unwrap().as_secs().to_string());
-
-    Ok(claims)
-}
-
-fn generate_token(user_id: i32) -> Result<String, InfrastructureError> {
-    //TODO: 環境変数から取得する
-    let app_key: String = "9E3CnfSfsi9BGfX3Dea#tkbs#nDj&6d#6Y&jhNa!".to_string();
-    let key: Hmac<Sha256> =
-        Hmac::new_from_slice(app_key.as_bytes()).expect("failed to create key from app key");
-    let claims = generate_claims(user_id)?;
-    let acces_token = claims.sign_with_key(&key)?;
-    Ok(acces_token)
-}
-
-pub fn verify_token(token: &str) -> Result<BTreeMap<String, String>, Status> {
-    //TODO: 環境変数から取得する
-    let app_key: String = "9E3CnfSfsi9BGfX3Dea#tkbs#nDj&6d#6Y&jhNa!".to_string();
-
-    let key: Hmac<Sha256> = Hmac::new_from_slice(app_key.as_bytes())
-        .map_err(|_| Status::failed_precondition("failed to create key"))?;
-    token
-        .verify_with_key(&key)
-        .map_err(|_| Status::failed_precondition("failed to verify"))
 }

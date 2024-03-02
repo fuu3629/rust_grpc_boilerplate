@@ -20,8 +20,8 @@ impl MigrationTrait for Migration {
                     )
                     .col(ColumnDef::new(Shift::UserId).integer().not_null())
                     .col(ColumnDef::new(Shift::Assigned).boolean().not_null())
-                    .col(ColumnDef::new(Shift::Start).string().not_null())
-                    .col(ColumnDef::new(Shift::End).string().not_null())
+                    .col(ColumnDef::new(Shift::Start).date_time().not_null())
+                    .col(ColumnDef::new(Shift::End).date_time().not_null())
                     .to_owned(),
             )
             .await
