@@ -4,7 +4,7 @@
 // @ts-nocheck
 
 import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { Message, proto3 } from "@bufbuild/protobuf";
+import { Message, proto3, Timestamp } from "@bufbuild/protobuf";
 
 /**
  * @generated from enum jobManage.Permission
@@ -274,14 +274,14 @@ export class LoginUserResponse extends Message<LoginUserResponse> {
  */
 export class Shift extends Message<Shift> {
   /**
-   * @generated from field: string start = 1;
+   * @generated from field: google.protobuf.Timestamp start = 1;
    */
-  start = "";
+  start?: Timestamp;
 
   /**
-   * @generated from field: string end = 2;
+   * @generated from field: google.protobuf.Timestamp end = 2;
    */
-  end = "";
+  end?: Timestamp;
 
   /**
    * @generated from field: jobManage.ShiftStatus status = 4;
@@ -296,8 +296,8 @@ export class Shift extends Message<Shift> {
   static readonly runtime: typeof proto3 = proto3;
   static readonly typeName = "jobManage.Shift";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "start", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "end", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 1, name: "start", kind: "message", T: Timestamp },
+    { no: 2, name: "end", kind: "message", T: Timestamp },
     { no: 4, name: "status", kind: "enum", T: proto3.getEnumType(ShiftStatus) },
   ]);
 

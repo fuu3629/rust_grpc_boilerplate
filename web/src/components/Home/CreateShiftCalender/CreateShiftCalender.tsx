@@ -9,6 +9,7 @@ import { Shift } from "../../../../services/helloworld_pb";
 import { useClient } from "@/pages/api/ClientProvider";
 import { CokiesContext } from "@/pages/api/CokiesContext";
 import { jobManageService } from "../../../../services/helloworld_connectweb";
+import { convert } from "../ConfirmCalender/Converter";
 
 export interface CreateShiftCalenderProps {}
 
@@ -55,14 +56,7 @@ export function CreateShiftCalender({}: CreateShiftCalenderProps) {
       </Flex>
       <FullCalendar
         plugins={[dayGridPlugin, interactionPlugin]}
-        events={shifts.concat(appliedShifts).map((shift) => ({
-          start: shift.start.split("T")[0],
-          end: shift.end.split("T")[0],
-          title: `${shift.start
-            .split("T")[1]
-            .split(":")
-            .slice(0, 2)} ~ ${shift.end.split("T")[1].split(":").slice(0, 2)}`,
-        }))}
+        events={convert(shifts.concat(appliedShifts))}
         selectable={true}
         select={handleSelect}
         initialView="dayGridMonth"
@@ -70,7 +64,7 @@ export function CreateShiftCalender({}: CreateShiftCalenderProps) {
         height={"90%"}
         businessHours={true}
         eventClick={(info) => console.log(info.event._def.title)}
-        datesSet={(info) => console.log(info.start.getMonth())}
+        // datesSet={(info) => console.log(info.start.getMonth())}
       />
       <CreateShiftModal
         shifts={shifts}

@@ -16,6 +16,7 @@ impl InfrastructureImpl {
     pub fn new() -> InfrastructureImpl {
         InfrastructureImpl {}
     }
+
     pub async fn create_user(
         &self,
         request: CreateUserRequest,

@@ -1,8 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
-import { date, z } from "zod";
+import { z } from "zod";
 import { Shift } from "../../../../services/helloworld_pb";
+import { PartialMessage, Timestamp } from "@bufbuild/protobuf";
 
 export const CreateShiftSchema = z.object({
   startHour: z.string(),
@@ -23,14 +24,18 @@ export const useCreateShiftForm = (
       resolver: zodResolver(CreateShiftSchema),
     });
   const onSubmit = (data: CreateShiftSchemaType) => {
-    const tmp = {
-      start: `${date}T${data.startHour}:${data.startMinute}:00`,
-      end: `${date}T${data.endHour}:${data.endMinute}:00`,
+    const start = new Date(
+      `${date}T${data.startHour}:${data.startMinute}:00+09:00`
+    );
+    const end = new Date(`${date}T${data.endHour}:${data.endMinute}:00+09:00`);
+    const tmp: Shift = new Shift({
+      start: Timestamp.fromDate(start),
+      end: Timestamp.fromDate(end),
       status: 0,
-    } as Shift;
-    const new_shifts = [...shifts, tmp];
-    setShifts(new_shifts);
+    });
+    const new_shifts = shifts.concat(tmp);
     console.log(new_shifts);
+    setShifts(new_shifts);
     reset();
   };
   return { register, onSubmit: handleSubmit(onSubmit), formState, reset };

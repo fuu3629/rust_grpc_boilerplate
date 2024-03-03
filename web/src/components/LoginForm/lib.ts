@@ -31,7 +31,6 @@ export const useLoginForm = () => {
     };
     try {
       const res = await client.loginUser(req);
-      console.log(res);
       setCookie(null, "auth", res.token, {
         maxAge: 60 * 60,
         path: "/",

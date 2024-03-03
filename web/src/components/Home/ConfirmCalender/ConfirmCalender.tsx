@@ -9,6 +9,7 @@ import events from "events";
 import { useContext, useEffect, useState } from "react";
 import { jobManageService } from "../../../../services/helloworld_connectweb";
 import { Shift } from "../../../../services/helloworld_pb";
+import { convert } from "./Converter";
 
 export interface ConfirmCalenderProps {}
 
@@ -37,18 +38,7 @@ export function ConfirmCalender({}: ConfirmCalenderProps) {
         initialView="dayGridMonth"
         locale="ja"
         height={"90%"}
-        events={shifts.map((shift) => {
-          return {
-            title: `${shift.start
-              .split("T")[1]
-              .split(":")
-              .slice(0, 2)} ~ ${shift.end
-              .split("T")[1]
-              .split(":")
-              .slice(0, 2)}`,
-            start: shift.start.split("T")[0],
-          } as EventInput;
-        })}
+        events={convert(shifts)}
         businessHours={true}
       />
     </Box>

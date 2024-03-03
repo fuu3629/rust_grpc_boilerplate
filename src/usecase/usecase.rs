@@ -59,13 +59,8 @@ impl UsecaseImpl {
     }
 
     pub async fn create_shift(&self, request: Request<CreateShiftRequest>) -> Result<(), Status> {
-        let token = request
-            .metadata()
-            .get("authorization")
-            .ok_or(Status::unauthenticated("No access token specified"))?
-            .to_str()
-            .map_err(|_| Status::unauthenticated("Invalid access token"))?;
-        let claim = match verify_token(token) {
+        let token = get_token(&request.metadata()).unwrap();
+        let claim = match verify_token(&token) {
             Ok(claim) => claim,
             Err(_) => return Err(Status::unauthenticated("Invalid token")),
         };
@@ -84,13 +79,8 @@ impl UsecaseImpl {
     }
 
     pub async fn get_shifts(&self, request: Request<()>) -> Result<GetShiftsResponse, Status> {
-        let token = request
-            .metadata()
-            .get("authorization")
-            .ok_or(Status::unauthenticated("No access token specified"))?
-            .to_str()
-            .map_err(|_| Status::unauthenticated("Invalid access token"))?;
-        let claim = match verify_token(token) {
+        let token = get_token(&request.metadata()).unwrap();
+        let claim = match verify_token(&token) {
             Ok(claim) => claim,
             Err(_) => return Err(Status::unauthenticated("Invalid token")),
         };
@@ -101,6 +91,15 @@ impl UsecaseImpl {
 }
 
 // Auth関連の処理
+fn get_token(request_metadata: &tonic::metadata::MetadataMap) -> Result<String, Status> {
+    let token = request_metadata
+        .get("authorization")
+        .ok_or(Status::unauthenticated("No access token specified"))?
+        .to_str()
+        .map_err(|_| Status::unauthenticated("Invalid access token"))?;
+    Ok(token.to_string())
+}
+
 fn generate_claims(user_id: i32) -> Result<BTreeMap<&'static str, String>, InfrastructureError> {
     let mut claims: BTreeMap<&str, String> = BTreeMap::new();
 
