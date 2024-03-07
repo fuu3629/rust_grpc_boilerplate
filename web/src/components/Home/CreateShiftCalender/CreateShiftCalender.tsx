@@ -10,7 +10,6 @@ import { useClient } from "@/pages/api/ClientProvider";
 import { CokiesContext } from "@/pages/api/CokiesContext";
 import { jobManageService } from "../../../../services/helloworld_connectweb";
 import { convert } from "../ConfirmCalender/Converter";
-import { EventUpdateModal } from "../EventUpdateModal/EventUpdateModal";
 import { DeleteModal } from "../DeleteModal/DeleteModal";
 
 export interface CreateShiftCalenderProps {}
@@ -35,12 +34,13 @@ export function CreateShiftCalender({}: CreateShiftCalenderProps) {
     setDeleteModalInfo(info);
     deleteModal.onOpen();
   };
-  const handleSubmmit = (shifts: Shift[]) => {
-    client
+  const handleSubmmit = async (shifts: Shift[]) => {
+    await client
       .createShift({ shifts }, { headers: { Authorization: token!["auth"] } })
       .then((res) => {
         console.log(res);
       });
+    setShifts([]);
   };
 
   useEffect(() => {
