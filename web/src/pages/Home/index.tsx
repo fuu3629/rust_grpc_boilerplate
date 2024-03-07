@@ -17,7 +17,7 @@ export default function Home() {
         index={tabIndex}
         onChange={(index) => setTabIndex(index)}
       >
-        <TabList h="40%">
+        <TabList h="60%">
           <Tab>
             <Text fontSize={"xl"}>確定シフト確認</Text>
           </Tab>

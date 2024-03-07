@@ -38,7 +38,7 @@ export function ConfirmCalender({}: ConfirmCalenderProps) {
         initialView="dayGridMonth"
         locale="ja"
         height={"90%"}
-        events={convert(shifts)}
+        events={convert(shifts, "#3182CE")}
         businessHours={true}
       />
     </Box>

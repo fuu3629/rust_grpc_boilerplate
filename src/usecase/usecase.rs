@@ -1,11 +1,12 @@
 use crate::infrastructure::error::InfrastructureError;
 use crate::infrastructure::infrastructure::InfrastructureImpl;
-use crate::job_manage;
+use crate::job_manage::{self};
 use bcrypt::verify;
 use hmac::{Hmac, Mac};
 use job_manage::{
     CreateGroupRequest, CreateShiftRequest, CreateUserRequest, CreateUserResponse,
-    GetAllGroupResponse, GetShiftsResponse, LoginUserRequest, LoginUserResponse,
+    DeleteShiftRequest, GetAllGroupResponse, GetShiftsResponse, LoginUserRequest,
+    LoginUserResponse, Permission,
 };
 use jwt::{SignWithKey, VerifyWithKey};
 use sha2::Sha256;
@@ -34,8 +35,8 @@ impl UsecaseImpl {
         &self,
         request: CreateUserRequest,
     ) -> Result<CreateUserResponse, Status> {
-        let user_id = self.infrastructure.create_user(request).await?;
-        let token = generate_token(user_id)?;
+        let user_id = self.infrastructure.create_user(request.clone()).await?;
+        let token = generate_token(user_id, request.permission)?;
         let res = CreateUserResponse { token: token };
         Ok(res)
     }
@@ -44,7 +45,7 @@ impl UsecaseImpl {
         let user = self.infrastructure.login_user(request.clone()).await?;
         match verify(request.password, &user.password) {
             Ok(true) => {
-                let token = generate_token(user.user_id)?;
+                let token = generate_token(user.user_id, user.permission)?;
                 Ok(LoginUserResponse { token: token })
             }
             Ok(false) | Err(_) => {
@@ -88,6 +89,11 @@ impl UsecaseImpl {
         let shifts = self.infrastructure.get_shifts(user_id).await?;
         Ok(shifts)
     }
+
+    pub async fn delete_shift(&self, request: DeleteShiftRequest) -> Result<(), Status> {
+        let res = self.infrastructure.delete_shift(request.shift_id).await?;
+        Ok(res)
+    }
 }
 
 // Auth関連の処理
@@ -100,7 +106,10 @@ fn get_token(request_metadata: &tonic::metadata::MetadataMap) -> Result<String, 
     Ok(token.to_string())
 }
 
-fn generate_claims(user_id: i32) -> Result<BTreeMap<&'static str, String>, InfrastructureError> {
+fn generate_claims(
+    user_id: i32,
+    permission: Permission,
+) -> Result<BTreeMap<&'static str, String>, InfrastructureError> {
     let mut claims: BTreeMap<&str, String> = BTreeMap::new();
 
     claims.insert("sub", user_id.to_string());
@@ -112,16 +121,21 @@ fn generate_claims(user_id: i32) -> Result<BTreeMap<&'static str, String>, Infra
 
     claims.insert("iat", current_timestamp.unwrap().as_secs().to_string());
     claims.insert("exp", exp.unwrap().as_secs().to_string());
-
+    claims.insert("prm", permission.as_str_name().to_string());
     Ok(claims)
 }
 
-fn generate_token(user_id: i32) -> Result<String, InfrastructureError> {
+fn generate_token(user_id: i32, permission: i32) -> Result<String, InfrastructureError> {
     //TODO: 環境変数から取得する
     let app_key: String = "9E3CnfSfsi9BGfX3Dea#tkbs#nDj&6d#6Y&jhNa!".to_string();
     let key: Hmac<Sha256> =
         Hmac::new_from_slice(app_key.as_bytes()).expect("failed to create key from app key");
-    let claims = generate_claims(user_id)?;
+    let prm = if permission == 1 {
+        Permission::Admin
+    } else {
+        Permission::User
+    };
+    let claims = generate_claims(user_id, prm)?;
     let acces_token = claims.sign_with_key(&key)?;
     Ok(acces_token)
 }

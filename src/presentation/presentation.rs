@@ -3,8 +3,8 @@ use crate::usecase::usecase::UsecaseImpl;
 use job_manage::job_manage_service_server::JobManageServiceServer;
 use job_manage::{
     job_manage_service_server::JobManageService, CreateGroupRequest, CreateShiftRequest,
-    CreateUserRequest, CreateUserResponse, GetAllGroupResponse, GetShiftsResponse,
-    LoginUserRequest, LoginUserResponse,
+    CreateUserRequest, CreateUserResponse, DeleteShiftRequest, GetAllGroupResponse,
+    GetShiftsResponse, LoginUserRequest, LoginUserResponse,
 };
 use std::net::SocketAddr;
 use tonic::{transport::Server, Request, Response, Status};
@@ -95,5 +95,13 @@ impl JobManageService for MyJobManage {
     ) -> Result<Response<GetShiftsResponse>, Status> {
         let res = self.usecase.get_shifts(request).await?;
         Ok(Response::new(res))
+    }
+
+    async fn delete_shift(
+        &self,
+        request: Request<DeleteShiftRequest>,
+    ) -> Result<Response<()>, Status> {
+        let _res = self.usecase.delete_shift(request.into_inner()).await?;
+        Ok(Response::new(()))
     }
 }

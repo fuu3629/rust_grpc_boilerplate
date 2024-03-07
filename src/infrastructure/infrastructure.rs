@@ -128,6 +128,7 @@ impl InfrastructureImpl {
             .iter()
             .map(|shift| Shift {
                 status: if shift.assigned { 1 } else { 0 },
+                shift_id: shift.shift_id,
                 start: Some(Timestamp {
                     seconds: shift.start.timestamp(),
                     nanos: 0,
@@ -148,5 +149,12 @@ impl InfrastructureImpl {
             total_time: total_time as i32,
         };
         Ok(res)
+    }
+
+    pub async fn delete_shift(&self, shift_id: i32) -> Result<(), InfrastructureError> {
+        let database_url = "postgres://postgres:password@0.0.0.0:5432/example";
+        let db: DatabaseConnection = Database::connect(database_url).await?;
+        let _res = ShiftEntity::delete_by_id(shift_id).exec(&db).await?;
+        Ok(())
     }
 }

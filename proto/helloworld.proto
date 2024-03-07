@@ -10,6 +10,7 @@ service jobManageService {
     rpc createShift (CreateShiftRequest) returns (google.protobuf.Empty);
     rpc getAllGroup (google.protobuf.Empty) returns (GetAllGroupResponse);
     rpc getShifts (google.protobuf.Empty) returns (GetShiftsResponse);
+    rpc deleteShift (DeleteShiftRequest) returns (google.protobuf.Empty);
 }
 
 message CreateGroupRequest {
@@ -51,6 +52,7 @@ enum ShiftStatus {
 message Shift {
     google.protobuf.Timestamp start = 1;
     google.protobuf.Timestamp end = 2;
+    int32 shift_id = 3;
     ShiftStatus status = 4;
 }
 
@@ -70,5 +72,9 @@ message Group{
 
 message GetAllGroupResponse {
     repeated Group groups = 1;
+}
+
+message DeleteShiftRequest {
+    int32 shift_id = 1;
 }
 

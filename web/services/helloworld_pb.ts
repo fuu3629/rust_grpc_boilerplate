@@ -284,6 +284,11 @@ export class Shift extends Message<Shift> {
   end?: Timestamp;
 
   /**
+   * @generated from field: int32 shift_id = 3;
+   */
+  shiftId = 0;
+
+  /**
    * @generated from field: jobManage.ShiftStatus status = 4;
    */
   status = ShiftStatus.UNAUTHORIZED;
@@ -298,6 +303,7 @@ export class Shift extends Message<Shift> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "start", kind: "message", T: Timestamp },
     { no: 2, name: "end", kind: "message", T: Timestamp },
+    { no: 3, name: "shift_id", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
     { no: 4, name: "status", kind: "enum", T: proto3.getEnumType(ShiftStatus) },
   ]);
 
@@ -475,6 +481,43 @@ export class GetAllGroupResponse extends Message<GetAllGroupResponse> {
 
   static equals(a: GetAllGroupResponse | PlainMessage<GetAllGroupResponse> | undefined, b: GetAllGroupResponse | PlainMessage<GetAllGroupResponse> | undefined): boolean {
     return proto3.util.equals(GetAllGroupResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message jobManage.DeleteShiftRequest
+ */
+export class DeleteShiftRequest extends Message<DeleteShiftRequest> {
+  /**
+   * @generated from field: int32 shift_id = 1;
+   */
+  shiftId = 0;
+
+  constructor(data?: PartialMessage<DeleteShiftRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime: typeof proto3 = proto3;
+  static readonly typeName = "jobManage.DeleteShiftRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "shift_id", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteShiftRequest {
+    return new DeleteShiftRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeleteShiftRequest {
+    return new DeleteShiftRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeleteShiftRequest {
+    return new DeleteShiftRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: DeleteShiftRequest | PlainMessage<DeleteShiftRequest> | undefined, b: DeleteShiftRequest | PlainMessage<DeleteShiftRequest> | undefined): boolean {
+    return proto3.util.equals(DeleteShiftRequest, a, b);
   }
 }
 

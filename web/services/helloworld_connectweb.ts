@@ -3,7 +3,7 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { CreateGroupRequest, CreateShiftRequest, CreateUserRequest, CreateUserResponse, GetAllGroupResponse, GetShiftsResponse, LoginUserRequest, LoginUserResponse } from "./helloworld_pb";
+import { CreateGroupRequest, CreateShiftRequest, CreateUserRequest, CreateUserResponse, DeleteShiftRequest, GetAllGroupResponse, GetShiftsResponse, LoginUserRequest, LoginUserResponse } from "./helloworld_pb";
 import { Empty, MethodKind } from "@bufbuild/protobuf";
 
 /**
@@ -64,6 +64,15 @@ export const jobManageService = {
       name: "getShifts",
       I: Empty,
       O: GetShiftsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc jobManage.jobManageService.deleteShift
+     */
+    deleteShift: {
+      name: "deleteShift",
+      I: DeleteShiftRequest,
+      O: Empty,
       kind: MethodKind.Unary,
     },
   }
