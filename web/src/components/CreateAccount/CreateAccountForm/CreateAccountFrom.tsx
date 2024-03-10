@@ -11,7 +11,7 @@ import {
   Spacer,
 } from "@chakra-ui/react";
 import { useCreateAccountForm } from "./lib";
-import { Group, CreateUserRequest } from "../../../services/helloworld_pb";
+import { Group, CreateUserRequest } from "../../../../services/helloworld_pb";
 import { Dispatch, SetStateAction } from "react";
 export interface CreateAccountFormProps {
   group: Group[];
@@ -21,7 +21,7 @@ export interface CreateAccountFormProps {
 export function CreateAccountForm({ group, setToken }: CreateAccountFormProps) {
   const { register, onSubmit, formState } = useCreateAccountForm(setToken);
   return (
-    <Flex direction="column" background="gray.100" padding={12} rounded={6}>
+    <Flex direction="column" background="gray.200" padding={12} rounded={6}>
       <form onSubmit={onSubmit}>
         <Heading mb={6}>新規登録</Heading>
         <HStack mb={6}>

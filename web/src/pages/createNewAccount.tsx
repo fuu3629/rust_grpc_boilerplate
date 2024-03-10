@@ -3,7 +3,7 @@ import { Flex } from "@chakra-ui/react";
 import { createGrpcWebTransport } from "@bufbuild/connect-web";
 import { createPromiseClient } from "@bufbuild/connect";
 import { jobManageService } from "../../services/helloworld_connectweb";
-import { CreateAccountForm } from "@/components/CreateAccountForm";
+import { CreateAccountForm } from "@/components/CreateAccount/CreateAccountForm";
 import { Group, CreateUserRequest } from "../../services/helloworld_pb";
 
 export default function CreateNewAccount() {
@@ -21,7 +21,7 @@ export default function CreateNewAccount() {
   }, []);
 
   return (
-    <Flex height="100vh" alignItems="center" justifyContent="center">
+    <Flex height="100vh" alignItems="center" justifyContent="center" w="100%">
       <CreateAccountForm group={group} setToken={setToken} />
     </Flex>
   );

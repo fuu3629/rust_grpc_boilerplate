@@ -6,8 +6,8 @@ import { parseCookies } from "nookies";
 import { useEffect, createContext } from "react";
 import { useRouter } from "next/router";
 import { CokiesContext } from "./api/CokiesContext";
-import { AppBar } from "@/components/AppBar";
-import { SideBar } from "@/components/SideBar";
+import { AppBar } from "@/components/Index/AppBar";
+import { SideBar } from "@/components/Index/SideBar";
 
 export default function App(
   { Component, pageProps }: AppProps,
