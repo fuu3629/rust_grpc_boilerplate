@@ -2138,6 +2138,7 @@ dependencies = [
  "futures-util",
  "hmac",
  "jwt",
+ "lazy_static",
  "prost",
  "prost-types",
  "protoc-rust",

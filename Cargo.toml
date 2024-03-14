@@ -27,6 +27,7 @@ tower-http = { version = "0.3.2", features=["full"]}
 thiserror = "1.0.57"
 chrono = "0.4.34"
 prost-types = "0.12.3"
+lazy_static = "1.4.0"
 
 [build-dependencies]
 tonic-build = "0.10.2"

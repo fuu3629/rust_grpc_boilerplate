@@ -22,7 +22,6 @@ export interface DeleteModalProps {
 export function DeleteModal({ isOpen, onCloseModal, shift }: DeleteModalProps) {
   const client = useClient(jobManageService);
   const onClose = onCloseModal;
-  console.log(shift?.event.extendedProps.shiftId);
 
   const handleDelete = async () => {
     await client.deleteShift({
